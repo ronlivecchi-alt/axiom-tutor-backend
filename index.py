@@ -1,8 +1,10 @@
 import os
+import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
+import google.generativeai as genai
 
 # 1. Initialize FastAPI app FIRST
 app = FastAPI()
@@ -10,15 +12,14 @@ app = FastAPI()
 # 2. Enable CORS so the Netlify frontend can call this backend later
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # We'll tighten this in Phase 3
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 3. Initialize Supabase client with new-format keys
+# 3. Initialize Supabase
 url: str = os.environ.get("SUPABASE_URL", "")
-# New format: sb_secret_... (or fall back to old names for compatibility)
 key: str = (
     os.environ.get("SUPABASE_SECRET_KEY")
     or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -34,13 +35,30 @@ if url and key:
         print(f"Supabase init error: {e}")
 else:
     print(f"Supabase NOT initialized. url set: {bool(url)}, key set: {bool(key)}")
+
+# 4. Initialize Gemini
+gemini_key: str = os.environ.get("GEMINI_API_KEY", "")
+gemini_model = None
+if gemini_key:
+    try:
+        genai.configure(api_key=gemini_key)
+        # Try a current model; if it fails we'll fall back
+        gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+        print("Gemini client initialized successfully")
+    except Exception as e:
+        print(f"Gemini init error: {e}")
+else:
+    print(f"Gemini NOT initialized. GEMINI_API_KEY set: {bool(gemini_key)}")
+
 # Data Models
 class StudentSubmission(BaseModel):
     student_id: str
     question_id: str
     user_answer: str
+    problem_text: str = ""      # optional, e.g. "2/3 + 1/4 = ?"
+    correct_answer: str = ""    # optional, e.g. "11/12"
 
-# 3. Define Routes AFTER app is defined
+# Routes
 @app.get("/api")
 @app.get("/api/")
 def api_root():
@@ -48,15 +66,92 @@ def api_root():
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok", "service": "Axiom AI Tutor API"}
+    return {
+        "status": "ok",
+        "service": "Axiom AI Tutor API",
+        "supabase_ready": supabase is not None,
+        "gemini_ready": gemini_model is not None,
+    }
+
+# Fallback rule-based evaluation (used if Gemini fails)
+def fallback_evaluate(user_answer: str, correct_answer: str):
+    user_clean = user_answer.lower().strip()
+    correct_clean = correct_answer.lower().strip()
+    if correct_clean and correct_clean in user_clean:
+        return True, "Great job! That is correct.", None
+    return False, "Not quite — try again, or ask for a hint.", None
+
+# Gemini-powered evaluation
+def evaluate_with_gemini(user_answer: str, problem_text: str, correct_answer: str):
+    if gemini_model is None:
+        return None
+
+    prompt = f"""You are a Socratic math tutor for IB MYP 1 students (age 11-12).
+
+A student was given this problem:
+{problem_text if problem_text else "(problem text not provided)"}
+
+The correct answer is:
+{correct_answer if correct_answer else "(not provided — use your judgment)"}
+
+The student answered:
+{user_answer}
+
+Evaluate the student's answer. Respond ONLY with valid JSON in exactly this format, no other text:
+{{
+  "is_correct": true or false,
+  "misconception_tag": "a short 2-5 word tag describing the type of error, or null if correct",
+  "feedback": "a short, encouraging message for the student (max 2 sentences, Grade 6 friendly)"
+}}
+
+Rules:
+- is_correct is true if the answer is mathematically equivalent to the correct answer, regardless of formatting.
+- If the student is wrong, misconception_tag should describe WHY they got it wrong (e.g. "Added denominators directly", "Sign error", "Confused factors and multiples").
+- Be encouraging even when wrong. Never say "you failed."
+- Do not include markdown code fences in your response.
+"""
+
+    try:
+        response = gemini_model.generate_content(prompt)
+        text = response.text.strip()
+
+        # Strip any accidental markdown fences
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
+
+        data = json.loads(text)
+        return {
+            "is_correct": bool(data.get("is_correct", False)),
+            "misconception_tag": data.get("misconception_tag"),
+            "feedback": data.get("feedback", "Let's keep working on this."),
+        }
+    except Exception as e:
+        print(f"Gemini evaluation error: {e}")
+        return None
 
 @app.post("/api/evaluate")
 async def evaluate_submission(submission: StudentSubmission):
-    # Place evaluation logic here
-    is_correct = "x = 5" in submission.user_answer.lower() or "5" in submission.user_answer
-    feedback = "Great job! That is correct." if is_correct else "Check your algebraic steps again."
-    misconception_tag = None if is_correct else "Sign Error"
+    # Try Gemini first
+    result = evaluate_with_gemini(
+        submission.user_answer,
+        submission.problem_text,
+        submission.correct_answer,
+    )
 
+    # Fall back to rule-based if Gemini failed or isn't configured
+    if result is None:
+        is_correct, feedback, misconception_tag = fallback_evaluate(
+            submission.user_answer, submission.correct_answer
+        )
+    else:
+        is_correct = result["is_correct"]
+        feedback = result["feedback"]
+        misconception_tag = result["misconception_tag"]
+
+    # Store in Supabase
     if supabase:
         try:
             supabase.table("student_submissions").insert({
@@ -64,7 +159,7 @@ async def evaluate_submission(submission: StudentSubmission):
                 "question_id": submission.question_id,
                 "user_answer": submission.user_answer,
                 "is_correct": is_correct,
-                "misconception_tag": misconception_tag
+                "misconception_tag": misconception_tag,
             }).execute()
         except Exception as e:
             print(f"DB Insert Error: {e}")
@@ -72,7 +167,7 @@ async def evaluate_submission(submission: StudentSubmission):
     return {
         "is_correct": is_correct,
         "feedback": feedback,
-        "misconception_tag": misconception_tag
+        "misconception_tag": misconception_tag,
     }
 
 @app.get("/api/metrics")
@@ -105,7 +200,7 @@ async def get_teacher_metrics():
         return {
             "total_submissions": total,
             "class_accuracy": accuracy,
-            "top_misconceptions": top_misconceptions
+            "top_misconceptions": top_misconceptions,
         }
     except Exception as e:
         print(f"Metrics Fetch Error: {e}")
