@@ -1,6 +1,6 @@
 fastapi
 uvicorn
 supabase
-openai
+google-generativeai
 pydantic
 sympy
