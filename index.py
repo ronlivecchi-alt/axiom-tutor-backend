@@ -220,7 +220,7 @@ async def chat_with_tutor(message: dict):
     if not user_message:
         return {"reply": "Ask me anything about the problem we're working on!"}
 
-    if gemini_client is None:
+    if gemini_model is None:
         return {"reply": "I'm having trouble thinking right now. Try again in a moment!"}
 
     system_prompt = """You are Axiom, a Socratic math tutor for IB MYP 1 students (age 11-12).
@@ -242,7 +242,7 @@ Remember: you're a coach, not an answer key."""
     full_prompt = f"{system_prompt}{problem_context}\n\nStudent: {user_message}\n\nAxiom:"
 
     try:
-        response = gemini_client.models.generate_content(
+        response = gemini_models.generate_content(
             model=GEMINI_MODEL,
             contents=full_prompt,
         )
