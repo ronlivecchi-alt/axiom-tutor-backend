@@ -243,8 +243,8 @@ Remember: you're a coach, not an answer key."""
 
     try:
         response = gemini_model.generate_content(
-            model=gemini_model,
-            contents=full_prompt,
+            model = gemini_model,
+            contents = full_prompt,
         )
         reply = response.text.strip()
         return {"reply": reply}
