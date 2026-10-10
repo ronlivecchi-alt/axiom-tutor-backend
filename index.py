@@ -242,7 +242,7 @@ Remember: you're a coach, not an answer key."""
     full_prompt = f"{system_prompt}{problem_context}\n\nStudent: {user_message}\n\nAxiom:"
 
     try:
-        response = gemini_models.generate_content(
+        response = gemini_model.generate_content(
             model=GEMINI_MODEL,
             contents=full_prompt,
         )
