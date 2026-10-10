@@ -205,7 +205,7 @@ async def get_teacher_metrics():
     except Exception as e:
         print(f"Metrics Fetch Error: {e}")
         return {"total_submissions": 0, "class_accuracy": 0, "top_misconceptions": []}
-        @app.post("/api/chat")
+@app.post("/api/chat")
 async def chat_with_tutor(message: dict):
     """
     Socratic chat endpoint.
