@@ -242,10 +242,7 @@ Remember: you're a coach, not an answer key."""
     full_prompt = f"{system_prompt}{problem_context}\n\nStudent: {user_message}\n\nAxiom:"
 
     try:
-        response = gemini_model.generate_content(
-            model = gemini_model,
-            contents = full_prompt,
-        )
+        response = gemini_model.generate_content(full_prompt)
         reply = response.text.strip()
         return {"reply": reply}
     except Exception as e:
