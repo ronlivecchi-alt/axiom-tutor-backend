@@ -205,3 +205,49 @@ async def get_teacher_metrics():
     except Exception as e:
         print(f"Metrics Fetch Error: {e}")
         return {"total_submissions": 0, "class_accuracy": 0, "top_misconceptions": []}
+        @app.post("/api/chat")
+async def chat_with_tutor(message: dict):
+    """
+    Socratic chat endpoint.
+    Expects JSON: { "message": str, "student_id": str, "problem_key": str, "problem_text": str }
+    Returns: { "reply": str }
+    """
+    user_message = message.get("message", "").strip()
+    problem_text = message.get("problem_text", "").strip()
+    problem_key = message.get("problem_key", "").strip()
+    student_id = message.get("student_id", "").strip()
+
+    if not user_message:
+        return {"reply": "Ask me anything about the problem we're working on!"}
+
+    if gemini_client is None:
+        return {"reply": "I'm having trouble thinking right now. Try again in a moment!"}
+
+    system_prompt = """You are Axiom, a Socratic math tutor for IB MYP 1 students (age 11-12).
+
+Your job is to help students THINK through problems, not to give them the answer.
+
+Guidelines:
+- If the student asks for the answer directly, don't give it — ask a guiding question instead.
+- Use short, friendly sentences. Grade 6 vocabulary.
+- Reference the specific numbers and concepts in the problem.
+- Never say "you failed" or "wrong." Say things like "not quite yet" or "try thinking about..."
+- Keep responses to 2-3 sentences max unless the student asks for a detailed explanation.
+- If a student says "I don't know how to start," offer ONE small first step.
+- If a student shows you their working, check it and either confirm the step or gently point out where it went wrong.
+
+Remember: you're a coach, not an answer key."""
+
+    problem_context = f"\n\nThe student is currently working on: {problem_text}" if problem_text else ""
+    full_prompt = f"{system_prompt}{problem_context}\n\nStudent: {user_message}\n\nAxiom:"
+
+    try:
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=full_prompt,
+        )
+        reply = response.text.strip()
+        return {"reply": reply}
+    except Exception as e:
+        print(f"Chat error: {e}")
+        return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
