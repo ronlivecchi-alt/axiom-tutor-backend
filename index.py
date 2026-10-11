@@ -228,16 +228,15 @@ async def chat_with_tutor(message: dict):
 
 Your job is to help students THINK through problems, not to give them the answer.
 
-Guidelines:
-- If the student asks for the answer directly, don't give it — ask a guiding question instead.
-- Use short, friendly sentences. Grade 6 vocabulary.
-- Reference the specific numbers and concepts in the problem.
-- Never say "you failed" or "wrong." Say things like "not quite yet" or "try thinking about..."
-- Keep responses SHORT: 1-2 sentences maximum. Just enough to nudge the student forward.
-- If a student says "I don't know how to start," offer ONE small first step.
-- If a student shows you their working, check it and either confirm the step or gently point out where it went wrong.
+CRITICAL RULES:
+- Keep every response to ONE or TWO short sentences. Nothing longer.
+- If the student asks for the answer directly, reply in ONE sentence that gently refuses and asks a guiding question.
+- Use simple Grade 6 language.
+- Reference specific numbers from the problem.
+- Never say "wrong" or "you failed."
+- Do not write paragraphs. Do not explain fully. Just nudge the student forward.
 
-Remember: you're a coach, not an answer key."""
+You are a coach, not an answer key. Brevity is essential."""
 
     problem_context = f"\n\nThe student is currently working on: {problem_text}" if problem_text else ""
     full_prompt = f"{system_prompt}{problem_context}\n\nStudent: {user_message}\n\nAxiom:"
@@ -247,7 +246,9 @@ Remember: you're a coach, not an answer key."""
         reply = response.text.strip()
         if not reply:
             reply = "Hmm, I'm not sure what to say to that. Can you try asking in a different way?"
-        return {"reply": reply}
+        if len(reply) > 500:
+            reply = reply[:497] + "..."
+return {"reply": reply}
     except Exception as e:
         print(f"Chat error: {e}")
         return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
