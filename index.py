@@ -253,4 +253,4 @@ You are a coach, not an answer key. Brevity is essential."""
 return {"reply": reply}        
     except Exception as e:
         print(f"Chat error: {e}")
-        return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
+    return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
