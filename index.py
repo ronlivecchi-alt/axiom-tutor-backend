@@ -43,7 +43,7 @@ if gemini_key:
     try:
         genai.configure(api_key=gemini_key)
         # Try a current model; if it fails we'll fall back
-        gemini_model = genai.GenerativeModel("gemini- 3.8 -flash")
+        gemini_model = genai.GenerativeModel("gemini-3.8-flash")
         print("Gemini client initialized successfully")
     except Exception as e:
         print(f"Gemini init error: {e}")
