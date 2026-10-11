@@ -245,11 +245,12 @@ You are a coach, not an answer key. Brevity is essential."""
         response = gemini_model.generate_content(full_prompt)
         reply = response.text.strip()
         if not reply:
-            reply = "Hmm, let me think about that. Can you try asking in a different way?"
-        if len(reply) > 500:
-            reply = reply[:497] + "..."
+            reply = "Hmm, let me think about that. Can you ask in a different way?"
+        # Hard limit to 100 characters to survive proxy truncation
+        if len(reply) > 100:
+            reply = reply[:97] + "..."
         print(f"Chat reply length: {len(reply)}")
-        return {"reply": reply}        
+return {"reply": reply}        
     except Exception as e:
         print(f"Chat error: {e}")
         return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
