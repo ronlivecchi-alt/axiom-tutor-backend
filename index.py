@@ -233,7 +233,7 @@ Guidelines:
 - Use short, friendly sentences. Grade 6 vocabulary.
 - Reference the specific numbers and concepts in the problem.
 - Never say "you failed" or "wrong." Say things like "not quite yet" or "try thinking about..."
-- Keep responses to 2-3 sentences max unless the student asks for a detailed explanation.
+- Keep responses SHORT: 1-2 sentences maximum. Just enough to nudge the student forward.
 - If a student says "I don't know how to start," offer ONE small first step.
 - If a student shows you their working, check it and either confirm the step or gently point out where it went wrong.
 
@@ -245,6 +245,8 @@ Remember: you're a coach, not an answer key."""
     try:
         response = gemini_model.generate_content(full_prompt)
         reply = response.text.strip()
+        if not reply:
+            reply = "Hmm, I'm not sure what to say to that. Can you try asking in a different way?"
         return {"reply": reply}
     except Exception as e:
         print(f"Chat error: {e}")
