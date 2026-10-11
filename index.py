@@ -248,7 +248,7 @@ You are a coach, not an answer key. Brevity is essential."""
             reply = "Hmm, I'm not sure what to say to that. Can you try asking in a different way?"
         if len(reply) > 500:
             reply = reply[:497] + "..."
-return {"reply": reply}
+        return {"reply": reply}
     except Exception as e:
         print(f"Chat error: {e}")
         return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
