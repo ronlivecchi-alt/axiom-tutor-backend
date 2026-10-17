@@ -255,41 +255,41 @@ You are a coach, not an answer key. Brevity is essential."""
         print(f"Chat error: {e}")
     return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
     
-    @app.get("/api/roster")
-    async def get_class_roster():
-        if not supabase:
-            return []
+@app.get("/api/roster")
+async def get_class_roster():
+    if not supabase:
+        return []
         
-        try:
-            # Fetch all submissions
-            response = supabase.table("student_submissions").select("*").execute()
-            data = response.data or []
+    try:
+        # Fetch all submissions
+        response = supabase.table("student_submissions").select("*").execute()
+        data = response.data or []
 
-            # Group the data by student
-            roster_stats = {}
-            for row in data:
-                sid = row.get("student_id")
-                if not sid:
-                    continue
+        # Group the data by student
+        roster_stats = {}
+        for row in data:
+            sid = row.get("student_id")
+            if not sid:
+                continue
                 
-                if sid not in roster_stats:
-                    roster_stats[sid] = {
-                        "student_id": sid,
-                        "total_attempts": 0,
-                        "correct_attempts": 0,
-                        "latest_misconception": None
-                    }
+            if sid not in roster_stats:
+                roster_stats[sid] = {
+                    "student_id": sid,
+                    "total_attempts": 0,
+                    "correct_attempts": 0,
+                    "latest_misconception": None
+                }
             
-                roster_stats[sid]["total_attempts"] += 1
-                if row.get("is_correct"):
-                    roster_stats[sid]["correct_attempts"] += 1
-                elif row.get("misconception_tag"):
-                    # Keep track of the most recent misconception
-                    roster_stats[sid]["latest_misconception"] = row.get("misconception_tag")
+            roster_stats[sid]["total_attempts"] += 1
+            if row.get("is_correct"):
+                roster_stats[sid]["correct_attempts"] += 1
+            elif row.get("misconception_tag"):
+                # Keep track of the most recent misconception
+                roster_stats[sid]["latest_misconception"] = row.get("misconception_tag")
 
-            # Convert dictionary to a list for the frontend
-            return list(roster_stats.values())
+        # Convert dictionary to a list for the frontend
+        return list(roster_stats.values())
         
-        except Exception as e:
-            print(f"Roster Fetch Error: {e}")
-            return []
+    except Exception as e:
+        print(f"Roster Fetch Error: {e}")
+        return []
