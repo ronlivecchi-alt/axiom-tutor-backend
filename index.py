@@ -258,7 +258,7 @@ You are a coach, not an answer key. Brevity is essential."""
     @app.get("/api/roster")
     async def get_class_roster():
         if not supabase:
-        return []
+            return []
         
         try:
             # Fetch all submissions
