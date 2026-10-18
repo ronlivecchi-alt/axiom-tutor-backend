@@ -293,3 +293,55 @@ async def get_class_roster():
     except Exception as e:
         print(f"Roster Fetch Error: {e}")
         return []
+class GenerateRequest(BaseModel):
+    topic: str
+
+@app.post("/api/generate-problem")
+async def generate_problem(req: GenerateRequest):
+    if not supabase or gemini_model is None:
+        return {"error": "Services not ready"}
+
+    try:
+        # 1. Fetch the specific topic from your Supabase curriculum table
+        response = supabase.table("curriculum").select("*").eq("topic", req.topic).execute()
+        if not response.data:
+            return {"error": "Topic not found in curriculum"}
+        
+        curriculum_data = response.data[0]
+        
+        # 2. Build the prompt
+        prompt = f"""You are an expert IB MYP 1 mathematics teacher.
+I need a new practice problem for my students based on the following curriculum:
+
+Unit: {curriculum_data['unit_name']}
+Topic: {curriculum_data['topic']}
+Learning Objectives: {curriculum_data['objectives']}
+Example Problem: {curriculum_data['example_problem']}
+
+Generate ONE new, unique practice problem for this topic. 
+Respond ONLY with valid JSON in exactly this format, no other text:
+{{
+  "question_title": "A short title",
+  "equation": "The math expression in LaTeX format (e.g., '\\\\frac{2}{5} + \\\\frac{1}{3} = ?')",
+  "description": "A short hint or instruction for the student.",
+  "correct_answer": "The exact correct answer (e.g., '11/15')",
+  "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."]
+}}
+"""
+        # 3. Call Gemini
+        ai_response = gemini_model.generate_content(prompt)
+        text = ai_response.text.strip()
+        
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+            text = text.strip()
+            
+        import json
+        new_problem = json.loads(text)
+        return new_problem
+
+    except Exception as e:
+        print(f"Generation error: {e}")
+        return {"error": "Failed to generate problem"}
