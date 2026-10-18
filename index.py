@@ -305,7 +305,7 @@ async def generate_problem(req: GenerateRequest):
         # 1. Fetch the specific topic from your Supabase curriculum table
         response = supabase.table("curriculum").select("*").eq("topic", req.topic).execute()
         if not response.data:
-            return {"error": "Topic not found in curriculum"}
+            return {"error": "Topic not found in curriculum. Check your Supabase table."}
         
         curriculum_data = response.data[0]
         
@@ -319,10 +319,11 @@ Learning Objectives: {curriculum_data['objectives']}
 Example Problem: {curriculum_data['example_problem']}
 
 Generate ONE new, unique practice problem for this topic. 
-Respond ONLY with valid JSON in exactly this format, no other text:
+Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
+The JSON must have exactly these keys:
 {{
   "question_title": "A short title",
-  "equation": "The math expression in LaTeX format (e.g., '\\\\frac{2}{5} + \\\\frac{1}{3} = ?')",
+  "equation": "The math expression in LaTeX format. Use double backslashes for LaTeX commands (e.g., '\\\\frac{2}{5} + \\\\frac{1}{3} = ?')",
   "description": "A short hint or instruction for the student.",
   "correct_answer": "The exact correct answer (e.g., '11/15')",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."]
@@ -332,15 +333,26 @@ Respond ONLY with valid JSON in exactly this format, no other text:
         ai_response = gemini_model.generate_content(prompt)
         text = ai_response.text.strip()
         
-        if text.startswith("```"):
-            text = text.split("```")[1]
-            if text.startswith("json"):
-                text = text[4:]
-            text = text.strip()
+        # 4. Robustly strip markdown blocks if Gemini ignores instructions
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0].strip()
             
+        # 5. Parse the JSON safely
         import json
-        new_problem = json.loads(text)
+        try:
+            new_problem = json.loads(text)
+        except Exception as json_err:
+            print(f"RAW GEMINI TEXT: {text}")
+            raise Exception(f"JSON parsing failed. Gemini output: {text[:100]}...")
+            
         return new_problem
+
+    except Exception as e:
+        print(f"Generation error: {e}")
+        # Send the exact error back to the frontend so we can see it!
+        return {"error": str(e)}
 
     except Exception as e:
         print(f"Generation error: {e}")
