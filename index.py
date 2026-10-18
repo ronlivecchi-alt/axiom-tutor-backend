@@ -309,14 +309,20 @@ async def generate_problem(req: GenerateRequest):
         
         curriculum_data = response.data[0]
         
-        # 2. Build the prompt
+        # 2. Safely get the data (prevents crashes if a column is missing)
+        unit_name = curriculum_data.get('unit_name', 'MYP 1 Math')
+        topic = curriculum_data.get('topic', req.topic)
+        objectives = curriculum_data.get('objectives', 'Understand the core concepts.')
+        example_problem = curriculum_data.get('example_problem', 'No example provided.')
+        
+        # 3. Build the prompt
         prompt = f"""You are an expert IB MYP 1 mathematics teacher.
 I need a new practice problem for my students based on the following curriculum:
 
-Unit: {curriculum_data['unit_name']}
-Topic: {curriculum_data['topic']}
-Learning Objectives: {curriculum_data['objectives']}
-Example Problem: {curriculum_data['example_problem']}
+Unit: {unit_name}
+Topic: {topic}
+Learning Objectives: {objectives}
+Example Problem: {example_problem}
 
 Generate ONE new, unique practice problem for this topic. 
 Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
@@ -329,17 +335,17 @@ The JSON must have exactly these keys:
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."]
 }}
 """
-        # 3. Call Gemini
+        # 4. Call Gemini
         ai_response = gemini_model.generate_content(prompt)
         text = ai_response.text.strip()
         
-        # 4. Robustly strip markdown blocks if Gemini ignores instructions
+        # 5. Robustly strip markdown blocks if Gemini ignores instructions
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0].strip()
         elif "```" in text:
             text = text.split("```")[1].split("```")[0].strip()
             
-        # 5. Parse the JSON safely
+        # 6. Parse the JSON safely
         import json
         try:
             new_problem = json.loads(text)
@@ -351,7 +357,6 @@ The JSON must have exactly these keys:
 
     except Exception as e:
         print(f"Generation error: {e}")
-        # Send the exact error back to the frontend so we can see it!
         return {"error": str(e)}
 
     except Exception as e:
