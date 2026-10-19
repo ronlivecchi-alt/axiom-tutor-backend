@@ -322,6 +322,7 @@ async def generate_problem(req: GenerateRequest):
         # Grab the custom textbook/slides text if it exists
         custom_content = curriculum_data.get('content', '')
         context_text = f"Here is the exact textbook content to base the problem on:\n{custom_content}" if custom_content else ""
+                # 3. Build the prompt
         prompt = f"""You are an expert IB MYP 1 mathematics teacher.
 I need a new practice problem for my students based on the following curriculum:
 
@@ -330,7 +331,10 @@ Topic: {topic}
 Learning Objectives: {objectives}
 Example Problem: {example_problem}
 
+Here is the exact textbook content to base the problem on:
 {context_text}
+
+Note: The textbook text above may have been extracted from a PDF and might have messy formatting, missing symbols, or strange spacing for math equations. Please use your best judgment to interpret the mathematical meaning and output clean, properly formatted LaTeX.
 
 Generate ONE new, unique practice problem for this topic. 
 Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
