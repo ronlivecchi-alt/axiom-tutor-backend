@@ -4,3 +4,4 @@ supabase
 google-generativeai
 pydantic
 sympy
+pypdf
