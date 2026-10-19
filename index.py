@@ -392,15 +392,17 @@ async def upload_material(topic: str = Form(...), file: UploadFile = File(...)):
             extracted_text = contents.decode("utf-8")
         else:
             return {"error": "Please upload a PDF or TXT file for now."}
-            
+
+        # Debug: Print how many characters were extracted so we can see it in Render logs
+        print(f"Extracted {len(extracted_text)} characters from {file.filename}")
+
         # Save to Supabase
         # Note: We limit it to ~10,000 characters to prevent overloading the AI context window later
         supabase.table("curriculum").update({
-            "content": extracted_text[:10000] 
+            "content": extracted_text[:10000]
         }).eq("topic", topic).execute()
-        
+
         return {"message": f"Successfully uploaded and processed {file.filename} for {topic}!"}
-        
     except Exception as e:
         print(f"Upload error: {e}")
         return {"error": str(e)}
