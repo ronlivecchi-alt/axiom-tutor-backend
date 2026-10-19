@@ -400,10 +400,20 @@ async def upload_material(topic: str = Form(...), file: UploadFile = File(...)):
         # Debug: Print how many characters were extracted so we can see it in Render logs
         print(f"Extracted {len(extracted_text)} characters from {file.filename}")
 
-        # Save to Supabase
-        # Note: We limit it to ~10,000 characters to prevent overloading the AI context window later
+        # 1. Fetch the existing content first
+        existing_data = supabase.table("curriculum").select("content").eq("topic", topic).execute()
+        
+        existing_text = ""
+        if existing_data.data and existing_data.data[0].get("content"):
+            existing_text = existing_data.data[0]["content"]
+
+        # 2. Combine old text and new text with a divider
+        # We add a little header so the AI knows this is a new document
+        combined_text = existing_text + f"\n\n--- New Material: {file.filename} ---\n\n" + extracted_text
+
+        # 3. Save the combined text (still keeping the 10,000 char limit)
         supabase.table("curriculum").update({
-            "content": extracted_text[:10000]
+            "content": combined_text[:10000]
         }).eq("topic", topic).execute()
 
         return {"message": f"Successfully uploaded and processed {file.filename} for {topic}!"}
