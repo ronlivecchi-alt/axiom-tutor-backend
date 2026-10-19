@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
 import google.generativeai as genai
+import io
+from fastapi import UploadFile, File, Form
+from pypdf import PdfReader
 
 # 1. Initialize FastAPI app FIRST
 app = FastAPI()
@@ -316,6 +319,9 @@ async def generate_problem(req: GenerateRequest):
         example_problem = curriculum_data.get('example_problem', 'No example provided.')
         
         # 3. Build the prompt
+        # Grab the custom textbook/slides text if it exists
+        custom_content = curriculum_data.get('content', '')
+        context_text = f"Here is the exact textbook content to base the problem on:\n{custom_content}" if custom_content else ""
         prompt = f"""You are an expert IB MYP 1 mathematics teacher.
 I need a new practice problem for my students based on the following curriculum:
 
@@ -323,6 +329,8 @@ Unit: {unit_name}
 Topic: {topic}
 Learning Objectives: {objectives}
 Example Problem: {example_problem}
+
+{context_text}
 
 Generate ONE new, unique practice problem for this topic. 
 Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
@@ -362,3 +370,37 @@ The JSON must have exactly these keys:
     except Exception as e:
         print(f"Generation error: {e}")
         return {"error": "Failed to generate problem"}
+
+@app.post("/api/upload-material")
+async def upload_material(topic: str = Form(...), file: UploadFile = File(...)):
+    if not supabase:
+        return {"error": "Database not ready"}
+    
+    try:
+        # Read the file
+        contents = await file.read()
+        
+        # Extract text based on file type
+        extracted_text = ""
+        if file.filename.endswith(".pdf"):
+            reader = PdfReader(io.BytesIO(contents))
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    extracted_text += text + "\n"
+        elif file.filename.endswith(".txt"):
+            extracted_text = contents.decode("utf-8")
+        else:
+            return {"error": "Please upload a PDF or TXT file for now."}
+            
+        # Save to Supabase
+        # Note: We limit it to ~10,000 characters to prevent overloading the AI context window later
+        supabase.table("curriculum").update({
+            "content": extracted_text[:10000] 
+        }).eq("topic", topic).execute()
+        
+        return {"message": f"Successfully uploaded and processed {file.filename} for {topic}!"}
+        
+    except Exception as e:
+        print(f"Upload error: {e}")
+        return {"error": str(e)}
