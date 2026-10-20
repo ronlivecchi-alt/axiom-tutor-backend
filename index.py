@@ -420,3 +420,40 @@ async def upload_material(topic: str = Form(...), file: UploadFile = File(...)):
     except Exception as e:
         print(f"Upload error: {e}")
         return {"error": str(e)}
+# --- NEW DYNAMIC CURRICULUM ROUTES ---
+
+@app.get("/api/topics")
+async def get_all_topics():
+    if not supabase:
+        return []
+    try:
+        # Fetch just the unit and topic names to build the dropdown
+        response = supabase.table("curriculum").select("unit_name, topic").execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error fetching topics: {e}")
+        return []
+
+class NewTopicRequest(BaseModel):
+    unit_name: str
+    topic: str
+    objectives: str = ""
+    example_problem: str = ""
+
+@app.post("/api/topics")
+async def create_new_topic(req: NewTopicRequest):
+    if not supabase:
+        return {"error": "Database not ready"}
+    try:
+        # Insert the new row
+        supabase.table("curriculum").insert({
+            "unit_name": req.unit_name,
+            "topic": req.topic,
+            "objectives": req.objectives,
+            "example_problem": req.example_problem,
+            "content": "" # Empty content to start
+        }).execute()
+        return {"message": "Topic added successfully!"}
+    except Exception as e:
+        print(f"Error adding topic: {e}")
+        return {"error": str(e)}
