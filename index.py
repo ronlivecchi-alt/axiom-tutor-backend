@@ -337,10 +337,11 @@ Here is the exact textbook content to base the problem on:
 Note: The textbook text above may have been extracted from a PDF and might have messy formatting, missing symbols, or strange spacing for math equations. Please use your best judgment to interpret the mathematical meaning and output clean, properly formatted LaTeX.
 
 Generate ONE new, unique practice problem for this topic. 
+Ensure the problem is structurally different from typical examples (e.g., mix word problems, simple equations, and complex multi-step problems).
 Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
 The JSON must have exactly these keys:
 {{
-  "question_title": "A short title",
+  "question_title": "A short, UNIQUE title. Vary the wording so it doesn't repeat previous titles.",
   "equation": "The math expression in LaTeX format. Use double backslashes for LaTeX commands (e.g., '\\\\frac{2}{5} + \\\\frac{1}{3} = ?')",
   "description": "A short hint or instruction for the student.",
   "correct_answer": "The exact correct answer (e.g., '11/15')",
