@@ -457,3 +457,39 @@ async def create_new_topic(req: NewTopicRequest):
     except Exception as e:
         print(f"Error adding topic: {e}")
         return {"error": str(e)}
+class SaveProblemRequest(BaseModel):
+    topic: str
+    title: str
+    equation: str
+    description: str
+    correct_answer: str
+    worked_example: list
+
+@app.post("/api/save-problem")
+async def save_problem(req: SaveProblemRequest):
+    if not supabase:
+        return {"error": "Database not ready"}
+    try:
+        supabase.table("problems").insert({
+            "topic": req.topic,
+            "title": req.title,
+            "equation": req.equation,
+            "description": req.description,
+            "correct_answer": req.correct_answer,
+            "worked_example": req.worked_example
+        }).execute()
+        return {"message": "Problem saved successfully!"}
+    except Exception as e:
+        print(f"Error saving problem: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/problems/{topic}")
+async def get_problems(topic: str):
+    if not supabase:
+        return []
+    try:
+        response = supabase.table("problems").select("*").eq("topic", topic).execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error fetching problems: {e}")
+        return []
