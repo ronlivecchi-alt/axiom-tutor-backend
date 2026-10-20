@@ -493,3 +493,24 @@ async def get_problems(topic: str):
     except Exception as e:
         print(f"Error fetching problems: {e}")
         return []
+import random
+
+@app.get("/api/quiz/{topic}")
+async def get_quiz(topic: str):
+    if not supabase:
+        return []
+    try:
+        # Fetch all problems for this topic
+        response = supabase.table("problems").select("*").eq("topic", topic).execute()
+        all_problems = response.data or []
+        
+        # If there are fewer than 5, just return them all
+        if len(all_problems) <= 5:
+            random.shuffle(all_problems)
+            return all_problems
+            
+        # If there are more than 5, pick 5 random ones
+        return random.sample(all_problems, 5)
+    except Exception as e:
+        print(f"Error fetching quiz: {e}")
+        return []
