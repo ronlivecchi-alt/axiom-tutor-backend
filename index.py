@@ -414,7 +414,7 @@ async def upload_material(topic: str = Form(...), file: UploadFile = File(...)):
 
         # 3. Save the combined text (still keeping the 10,000 char limit)
         supabase.table("curriculum").update({
-            "content": combined_text[:10000]
+            "content": combined_text[:20000]
         }).eq("topic", topic).execute()
 
         return {"message": f"Successfully uploaded and processed {file.filename} for {topic}!"}
