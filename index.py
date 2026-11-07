@@ -515,3 +515,61 @@ async def get_quiz(topic: str):
     except Exception as e:
         print(f"Error fetching quiz: {e}")
         return []
+class StudyToolsRequest(BaseModel):
+    topic: str
+
+@app.post("/api/study-tools")
+async def generate_study_tools(req: StudyToolsRequest):
+    if not supabase or gemini_model is None:
+        return {"error": "Services not ready"}
+
+    try:
+        # Fetch the curriculum text for this topic
+        response = supabase.table("curriculum").select("content", "objectives").eq("topic", req.topic).execute()
+        if not response.data:
+            return {"error": "No curriculum found for this topic."}
+        
+        data = response.data[0]
+        content = data.get('content', '')
+        objectives = data.get('objectives', '')
+        
+        if not content:
+            return {"error": "No textbook content uploaded for this topic yet."}
+
+        prompt = f"""You are an expert IB MYP math teacher. 
+Based on the following curriculum content, create study materials for a student.
+
+Learning Objectives: {objectives}
+Textbook Content:
+{content}
+
+Generate a JSON response with EXACTLY this structure (do not use markdown blocks, just raw JSON):
+{{
+  "flashcards": [
+    {{"front": "Term or Question", "back": "Definition or Answer"}},
+    {{"front": "Term or Question", "back": "Definition or Answer"}}
+  ],
+  "graphic_organizer": [
+    "Main Concept: ...",
+    "Key Rule: ...",
+    "Step-by-step: ...",
+    "Common Mistake to Avoid: ..."
+  ]
+}}
+Generate between 3 and 5 flashcards, and 3 to 5 bullet points for the graphic organizer.
+"""
+        ai_response = gemini_model.generate_content(prompt)
+        text = ai_response.text.strip()
+        
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0].strip()
+            
+        import json
+        tools = json.loads(text)
+        return tools
+
+    except Exception as e:
+        print(f"Study Tools Error: {e}")
+        return {"error": str(e)}
