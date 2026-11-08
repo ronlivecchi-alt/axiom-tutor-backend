@@ -594,3 +594,13 @@ async def student_login(login_data: StudentLogin):
     except Exception as e:
         print(f"Login error: {e}")
         return {"error": str(e)}
+@app.get("/api/students")
+async def get_all_students():
+    if not supabase:
+        return []
+    try:
+        response = supabase.table("students").select("*").execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error fetching students: {e}")
+        return []
