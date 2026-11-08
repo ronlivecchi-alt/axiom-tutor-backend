@@ -573,3 +573,24 @@ Generate between 3 and 5 flashcards, and 3 to 5 bullet points for the graphic or
     except Exception as e:
         print(f"Study Tools Error: {e}")
         return {"error": str(e)}
+class StudentLogin(BaseModel):
+    class_code: str
+    name: str
+    pin: str
+
+@app.post("/api/login")
+async def student_login(login_data: StudentLogin):
+    if not supabase:
+        return {"error": "Database not ready"}
+    try:
+        # Check if the student exists and the PIN matches
+        response = supabase.table("students").select("*").eq("class_code", login_data.class_code).eq("name", login_data.name).eq("pin", login_data.pin).execute()
+        
+        if not response.data:
+            return {"error": "Invalid Class Code, Name, or PIN"}
+            
+        student = response.data[0]
+        return {"success": True, "student": {"id": student["id"], "name": student["name"], "class": student["class_code"]}}
+    except Exception as e:
+        print(f"Login error: {e}")
+        return {"error": str(e)}
