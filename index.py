@@ -343,7 +343,7 @@ The JSON must have exactly these keys:
 {{
   "question_title": "A short, UNIQUE title. Vary the wording so it doesn't repeat previous titles.",
   "equation": "The math expression in LaTeX format. Use double backslashes for LaTeX commands (e.g., '\\\\frac{2}{5} + \\\\frac{1}{3} = ?')",
-  "description": "A short hint or instruction for the student. Use single dollar signs for inline math (e.g., $x = 5$).".",
+  "description": "A short hint or instruction for the student. Use single dollar signs for inline math (e.g., $x = 5$)."
   "correct_answer": "The exact correct answer (e.g., '11/15')",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."]
 }}
