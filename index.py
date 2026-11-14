@@ -249,11 +249,13 @@ You are a coach, not an answer key. Brevity is essential."""
         reply = response.text.strip()
         if not reply:
             reply = "Hmm, let me think about that. Can you ask in a different way?"
-        # Hard limit to 100 characters to survive proxy truncation
-        if len(reply) > 100:
-            reply = reply[:97] + "..."
+            
+        # Hard limit to 500 characters (about 3-4 sentences)
+        if len(reply) > 500:
+            reply = reply[:497] + "..."
+            
         print(f"Chat reply length: {len(reply)}")
-        return {"reply": reply}        
+        return {"reply": reply}       
     except Exception as e:
         print(f"Chat error: {e}")
     return {"reply": "I had trouble thinking about that. Try asking again in a different way!"}
