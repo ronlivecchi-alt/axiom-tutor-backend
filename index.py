@@ -308,7 +308,9 @@ async def generate_problem(req: GenerateRequest):
 
     try:
         # 1. Fetch the specific topic from your Supabase curriculum table
-        response = supabase.table("curriculum").select("*").eq("topic", req.topic).execute()
+        # We add .strip() to remove any accidental spaces from the frontend
+        clean_topic = req.topic.strip() if req.topic else ""
+        response = supabase.table("curriculum").select("*").eq("topic", clean_topic).execute()
         if not response.data:
             return {"error": "Topic not found in curriculum. Check your Supabase table."}
         
