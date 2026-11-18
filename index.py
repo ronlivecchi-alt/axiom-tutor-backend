@@ -505,16 +505,18 @@ async def get_quiz(topic: str):
     if not supabase:
         return []
     try:
-        # Fetch all problems for this topic
-        response = supabase.table("problems").select("*").eq("topic", topic).execute()
+        # Add .strip() to handle any trailing spaces
+        clean_topic = topic.strip() if topic else ""
+        
+        response = supabase.table("problems").select("*").eq("topic", clean_topic).execute()
         all_problems = response.data or []
         
-        # If there are fewer than 5, just return them all
         if len(all_problems) <= 5:
+            import random
             random.shuffle(all_problems)
             return all_problems
             
-        # If there are more than 5, pick 5 random ones
+        import random
         return random.sample(all_problems, 5)
     except Exception as e:
         print(f"Error fetching quiz: {e}")
