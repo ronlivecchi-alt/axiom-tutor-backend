@@ -346,7 +346,7 @@ The JSON must have exactly these keys:
   "description": "A short hint or instruction for the student.",
   "correct_answer": "The exact correct answer (e.g., '11/15')",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."],
-  "criteria": "Criterion A, B, C, or D based on the problem type"
+  "criteria": "Which MYP Criterion (A, B, C, or D) this problem best assesses"
 }}
 """
         # 4. Call Gemini
@@ -460,26 +460,29 @@ async def create_new_topic(req: NewTopicRequest):
         print(f"Error adding topic: {e}")
         return {"error": str(e)}
 class SaveProblemRequest(BaseModel):
+    unit_name: str
     topic: str
     title: str
     equation: str
     description: str
     correct_answer: str
     worked_example: list
-    criteria: str = "Criterion A" 
+    criteria: str = "Criterion A"   
 
 @app.post("/api/save-problem")
 async def save_problem(req: SaveProblemRequest):
     if not supabase:
         return {"error": "Database not ready"}
     try:
-        supabase.table("problems").insert({
+                supabase.table("problems").insert({
+            "unit_name": req.unit_name,
             "topic": req.topic,
             "title": req.title,
             "equation": req.equation,
             "description": req.description,
             "correct_answer": req.correct_answer,
-            "worked_example": req.worked_example
+            "worked_example": req.worked_example,
+            "criteria": req.criteria 
         }).execute()
         return {"message": "Problem saved successfully!"}
     except Exception as e:
