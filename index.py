@@ -474,7 +474,7 @@ async def save_problem(req: SaveProblemRequest):
     if not supabase:
         return {"error": "Database not ready"}
     try:
-                supabase.table("problems").insert({
+        supabase.table("problems").insert({
             "unit_name": req.unit_name,
             "topic": req.topic,
             "title": req.title,
@@ -482,8 +482,9 @@ async def save_problem(req: SaveProblemRequest):
             "description": req.description,
             "correct_answer": req.correct_answer,
             "worked_example": req.worked_example,
-            "criteria": req.criteria 
+            "criteria": req.criteria
         }).execute()
+        
         return {"message": "Problem saved successfully!"}
     except Exception as e:
         print(f"Error saving problem: {e}")
