@@ -602,6 +602,32 @@ async def student_login(login_data: StudentLogin):
     except Exception as e:
         print(f"Login error: {e}")
         return {"error": str(e)}
+
+class TestRequest(BaseModel):
+    topics: list[str]
+
+@app.post("/api/generate-test")
+async def generate_test(req: TestRequest):
+    if not supabase:
+        return []
+    try:
+        all_problems = []
+        for topic in req.topics:
+            # Fetch problems for each selected topic
+            clean_topic = topic.strip() if topic else ""
+            response = supabase.table("problems").select("*").eq("topic", clean_topic).execute()
+            if response.data:
+                all_problems.extend(response.data)
+        
+        # If there aren't enough problems, just return all of them shuffled
+        import random
+        random.shuffle(all_problems)
+        
+        return all_problems[:10] # Return a maximum of 10 questions
+    except Exception as e:
+        print(f"Error generating test: {e}")
+        return []
+        
 @app.get("/api/students")
 async def get_all_students():
     if not supabase:
