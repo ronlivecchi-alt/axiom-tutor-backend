@@ -301,6 +301,7 @@ async def get_class_roster():
 class GenerateRequest(BaseModel):
     topic: str
     criteria_focus: str = "Auto" 
+
 @app.post("/api/generate-problem")
 async def generate_problem(req: GenerateRequest):
     if not supabase or gemini_model is None:
@@ -308,26 +309,26 @@ async def generate_problem(req: GenerateRequest):
 
     try:
         # 1. Fetch the specific topic from your Supabase curriculum table
-        # We add .strip() to remove any accidental spaces from the frontend
         clean_topic = req.topic.strip() if req.topic else ""
         response = supabase.table("curriculum").select("*").eq("topic", clean_topic).execute()
+        
         if not response.data:
             return {"error": "Topic not found in curriculum. Check your Supabase table."}
         
         curriculum_data = response.data[0]
-        
-        # 2. Safely get the data (prevents crashes if a column is missing)
+
+        # 2. Safely get the data
         unit_name = curriculum_data.get('unit_name', 'MYP 1 Math')
         topic = curriculum_data.get('topic', req.topic)
         objectives = curriculum_data.get('objectives', 'Understand the core concepts.')
         example_problem = curriculum_data.get('example_problem', 'No example provided.')
         criteria_focus = req.criteria_focus if hasattr(req, 'criteria_focus') else "Auto"
+
         # 3. Build the prompt
-        # Grab the custom textbook/slides text if it exists
         custom_content = curriculum_data.get('content', '')
         context_text = f"Here is the exact textbook content to base the problem on:\n{custom_content}" if custom_content else ""
-        # 3. Build the prompt
-    prompt = f"""You are an expert IB MYP 1 mathematics teacher.
+
+        prompt = f"""You are an expert IB MYP 1 mathematics teacher.
 I need a new practice problem for my students based on the following curriculum:
 If a specific criteria focus is requested, design the problem to match it. Focus: {criteria_focus}
 
@@ -350,16 +351,17 @@ The JSON must have exactly these keys:
   "criteria": "Which MYP Criterion (A, B, C, or D) this problem best assesses"
 }}
 """
+
         # 4. Call Gemini
         ai_response = gemini_model.generate_content(prompt)
         text = ai_response.text.strip()
-        
+
         # 5. Robustly strip markdown blocks if Gemini ignores instructions
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0].strip()
         elif "```" in text:
             text = text.split("```")[1].split("```")[0].strip()
-            
+
         # 6. Parse the JSON safely
         import json
         try:
@@ -367,17 +369,12 @@ The JSON must have exactly these keys:
         except Exception as json_err:
             print(f"RAW GEMINI TEXT: {text}")
             raise Exception(f"JSON parsing failed. Gemini output: {text[:100]}...")
-            
+
         return new_problem
 
     except Exception as e:
         print(f"Generation error: {e}")
         return {"error": str(e)}
-
-    except Exception as e:
-        print(f"Generation error: {e}")
-        return {"error": "Failed to generate problem"}
-
 @app.post("/api/upload-material")
 async def upload_material(topic: str = Form(...), file: UploadFile = File(...)):
     if not supabase:
