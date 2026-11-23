@@ -326,7 +326,7 @@ async def generate_problem(req: GenerateRequest):
         # Grab the custom textbook/slides text if it exists
         custom_content = curriculum_data.get('content', '')
         context_text = f"Here is the exact textbook content to base the problem on:\n{custom_content}" if custom_content else ""
-        # 3. Build the prompt
+    # 3. Build the prompt
     prompt = f"""You are an expert IB MYP 1 mathematics teacher.
 I need a new practice problem for my students based on the following curriculum:
 If a specific criteria focus is requested, design the problem to match it. Focus: {criteria_focus}
