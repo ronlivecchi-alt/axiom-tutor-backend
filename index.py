@@ -639,3 +639,16 @@ async def get_all_students():
     except Exception as e:
         print(f"Error fetching students: {e}")
         return []
+
+@app.get("/api/classes")
+async def get_classes():
+    if not supabase:
+        return []
+    try:
+        response = supabase.table("students").select("class_code").execute()
+        # Extract unique class codes, ignoring empty ones
+        classes = list(set([row["class_code"] for row in response.data if row.get("class_code")]))
+        return sorted(classes)
+    except Exception as e:
+        print(f"Error fetching classes: {e}")
+        return []
