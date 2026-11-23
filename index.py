@@ -428,7 +428,7 @@ async def get_all_topics():
         return []
     try:
         # Fetch just the unit and topic names to build the dropdown
-        response = supabase.table("curriculum").select("unit_name, topic").execute()
+        response = supabase.table("curriculum").select("unit_name, topic, objectives").execute()
         return response.data or []
     except Exception as e:
         print(f"Error fetching topics: {e}")
