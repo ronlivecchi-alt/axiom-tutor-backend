@@ -339,7 +339,6 @@ async def generate_problem(req: GenerateRequest):
 
         prompt = f"""You are an expert IB MYP 1 mathematics teacher.
 I need a new practice problem for my students based on the following curriculum:
-If a specific criteria focus is requested, design the problem to match it. Focus: {criteria_focus}
 
 Unit: {unit_name}
 Topic: {topic}
@@ -348,16 +347,25 @@ Example Problem: {example_problem}
 
 {context_text}
 
-Generate ONE new, unique practice problem for this topic. 
+CRITERIA INSTRUCTION:
+The requested focus is: {criteria_focus}.
+- If Criterion A: Generate a standard, single-part math problem testing knowledge.
+- If Criterion B (Investigating Patterns): Generate a multi-part question (Part a, b, c) that guides the student to discover a pattern or general rule.
+- If Criterion C (Communicating): The problem should ask the student to explain their reasoning.
+- If Criterion D (Real-world): Apply the math to a real-world scenario.
+- If the focus includes a combination (e.g., B & C or C & D), ensure the problem addresses both aspects.
+
+Generate ONE new practice problem. 
 Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
 The JSON must have exactly these keys:
 {{
   "question_title": "A short title",
-  "equation": "The math expression in LaTeX format. Use double backslashes for LaTeX commands (e.g., '\\\\frac{2}{5} + \\\\frac{1}{3} = ?')",
-  "description": "A short hint or instruction for the student.",
-  "correct_answer": "The exact correct answer (e.g., '11/15')",
+  "equation": "The main math expression in LaTeX format (or a short introduction if it's a multi-part question)",
+  "description": "A short hint or instruction.",
+  "correct_answer": "The exact correct answer.",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."],
-  "criteria": "Which MYP Criterion (A, B, C, or D) this problem best assesses"
+  "criteria": "Which MYP Criterion(s) this problem assesses",
+  "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // ONLY include this array if it is a multi-part investigation (Criterion B). Otherwise, omit or leave empty.
 }}
 """
 
