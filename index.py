@@ -349,26 +349,28 @@ Example Problem: {example_problem}
 
 CRITERIA INSTRUCTION:
 The requested focus is: {criteria_focus}.
-- If Criterion A: Generate a standard, single-part math problem testing knowledge.
-- If Criterion B (Investigating Patterns): Generate a multi-part question (Part a, b, c) that guides the student to discover a pattern or general rule.
+- If Criterion A: Generate a standard, single-part math problem.
+- If Criterion B (Investigating Patterns): Generate a multi-part question (Part a, b, c) that guides the student to discover a pattern.
 - If Criterion C (Communicating): The problem should ask the student to explain their reasoning.
 - If Criterion D (Real-world): Apply the math to a real-world scenario.
-- If the focus includes a combination (e.g., B & C or C & D), ensure the problem addresses both aspects.
 
-Generate ONE new practice problem. 
+CRITICAL RULES:
+1. If generating a multi-part question (Criterion B), you MUST put the actual questions for the student to answer inside the "parts" array (e.g., ["Part a: Find the next two terms.", "Part b: Write the general rule.", "Part c: Find the 50th term."]).
+2. Do NOT put the questions inside the "worked_example". The worked_example must ONLY contain the step-by-step solution to the problem.
+3. The "description" should be a brief 1-sentence introduction to the problem.
+
 Respond ONLY with valid JSON. Do not use markdown formatting, do not use code blocks, do not add any text before or after the JSON.
 The JSON must have exactly these keys:
 {{
   "question_title": "A short title",
-  "equation": "The main math expression in LaTeX format (or a short introduction if it's a multi-part question)",
-  "description": "A short hint or instruction.",
-  "correct_answer": "The exact correct answer.",
+  "equation": "The main math expression in LaTeX format",
+  "description": "A short 1-sentence instruction for the student.",
+  "correct_answer": "The final exact correct answer.",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."],
   "criteria": "Which MYP Criterion(s) this problem assesses",
-  "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // ONLY include this array if it is a multi-part investigation (Criterion B). Otherwise, omit or leave empty.
+  "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // ONLY include this array if it is a multi-part investigation. Otherwise, omit or leave empty.
 }}
 """
-
         # 4. Call Gemini
         ai_response = gemini_model.generate_content(prompt)
         text = ai_response.text.strip()
