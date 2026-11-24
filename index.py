@@ -368,7 +368,7 @@ The JSON must have exactly these keys:
   "correct_answer": "The final exact correct answer.",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."],
   "criteria": "Which MYP Criterion(s) this problem assesses",
-  "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // ONLY include this array if it is a multi-part investigation. Otherwise, omit or leave empty.
+   "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // If Criterion B, you MUST populate this array with the student questions. Do NOT put the questions in the description.
 }}
 """
         # 4. Call Gemini
