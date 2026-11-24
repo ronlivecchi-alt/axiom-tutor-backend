@@ -173,15 +173,23 @@ async def evaluate_submission(submission: StudentSubmission):
         "feedback": feedback,
         "misconception_tag": misconception_tag,
     }
-
-@app.get("/api/metrics")
-async def get_teacher_metrics():
+    
+@app.get("/api/metrics/{class_code}")
+async def get_teacher_metrics(class_code: str):
     if not supabase:
         return {"total_submissions": 0, "class_accuracy": 0, "top_misconceptions": []}
 
     try:
+        # 1. Get all students in this specific class
+        student_res = supabase.table("students").select("id").eq("class_code", class_code).execute()
+        student_ids = [str(s["id"]) for s in student_res.data] if student_res.data else []
+        
+        if not student_ids:
+            return {"total_submissions": 0, "class_accuracy": 0, "top_misconceptions": []}
+
+        # 2. Fetch submissions and filter for only these students
         response = supabase.table("student_submissions").select("*").execute()
-        data = response.data or []
+        data = [row for row in (response.data or []) if row.get("student_id") in student_ids]
 
         total = len(data)
         if total == 0:
@@ -204,11 +212,12 @@ async def get_teacher_metrics():
         return {
             "total_submissions": total,
             "class_accuracy": accuracy,
-            "top_misconceptions": top_misconceptions,
+            "top_misconceptions": top_misconceptions
         }
     except Exception as e:
         print(f"Metrics Fetch Error: {e}")
         return {"total_submissions": 0, "class_accuracy": 0, "top_misconceptions": []}
+
 @app.post("/api/chat")
 async def chat_with_tutor(message: dict):
     """
