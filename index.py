@@ -380,8 +380,11 @@ The JSON must have exactly these keys:
    "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // If Criterion B, you MUST populate this array with the student questions. Do NOT put the questions in the description.
 }}
 """
-        # 4. Call Gemini
-        ai_response = gemini_client.generate_content(prompt)
+       # 4. Call Gemini
+       ai_response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt
+        )
         text = ai_response.text.strip()
 
         # 5. Robustly strip markdown blocks if Gemini ignores instructions
@@ -592,7 +595,10 @@ Generate a JSON response with EXACTLY this structure (do not use markdown blocks
 }}
 Generate between 3 and 5 flashcards, and 3 to 5 bullet points for the graphic organizer.
 """
-        ai_response = gemini_client.generate_content(prompt)
+        ai_response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt
+        )
         text = ai_response.text.strip()
         
         if "```json" in text:
