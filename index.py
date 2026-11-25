@@ -380,8 +380,8 @@ The JSON must have exactly these keys:
    "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // If Criterion B, you MUST populate this array with the student questions. Do NOT put the questions in the description.
 }}
 """
-       # 4. Call Gemini
-       ai_response = gemini_client.models.generate_content(
+        # 4. Call Gemini
+        ai_response = gemini_client.models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt
         )
