@@ -43,7 +43,7 @@ else:
 gemini_key: str = os.environ.get("GEMINI_API_KEY", "")
 gemini_client = None
 # The new SDK doesn't need the "models/" prefix
-gemini_client = "gemini-3.8-flash" 
+GEMINI_MODEL = "gemini-3.8-flash" 
 
 if gemini_key:
     try:
