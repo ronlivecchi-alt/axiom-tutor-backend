@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
-import google.generativeai as genai
+from google import genai
 import io
 from fastapi import UploadFile, File, Form
 from pypdf import PdfReader
@@ -41,13 +41,14 @@ else:
 
 # 4. Initialize Gemini
 gemini_key: str = os.environ.get("GEMINI_API_KEY", "")
-gemini_model = None
-GEMINI_MODEL = "models/gemini-3.8-flash"
+gemini_client = None
+# The new SDK doesn't need the "models/" prefix
+GEMINI_MODEL = "gemini-3.8-flash" 
+
 if gemini_key:
     try:
-        genai.configure(api_key=gemini_key)
-        # Try a current model; if it fails we'll fall back
-        gemini_model = genai.GenerativeModel("models/gemini-3.8-flash")
+        # The new SDK uses genai.Client() instead of genai.configure()
+        gemini_client = genai.Client(api_key=gemini_key)
         print(f"Gemini client initialized successfully (model: {GEMINI_MODEL})")
     except Exception as e:
         print(f"Gemini init error: {e}")
@@ -116,7 +117,10 @@ Rules:
 """
 
     try:
-        response = gemini_model.generate_content(prompt)
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt
+        )
         text = response.text.strip()
 
         # Strip any accidental markdown fences
@@ -254,7 +258,10 @@ You are a coach, not an answer key. Brevity is essential."""
     full_prompt = f"{system_prompt}{problem_context}\n\nStudent: {user_message}\n\nAxiom:"
 
     try:
-        response = gemini_model.generate_content(full_prompt)
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt
+        )
         reply = response.text.strip()
         if not reply:
             reply = "Hmm, let me think about that. Can you ask in a different way?"
