@@ -118,7 +118,7 @@ Rules:
 
     try:
         response = gemini_client.models.generate_content(
-            model=gemini_client,
+            model=GEMINI_MODEL,
             contents=prompt
         )
         text = response.text.strip()
@@ -259,7 +259,7 @@ You are a coach, not an answer key. Brevity is essential."""
 
     try:
         response = gemini_client.models.generate_content(
-            model=gemini_client,
+            model=GEMINI_MODEL,
             contents=prompt
         )
         reply = response.text.strip()
