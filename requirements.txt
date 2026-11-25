@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 supabase
-google-generativeai
+google-genai
 pydantic
 sympy
 pypdf
