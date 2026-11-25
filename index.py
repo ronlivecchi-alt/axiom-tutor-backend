@@ -263,6 +263,8 @@ You are a coach, not an answer key. Brevity is essential."""
             contents=prompt
         )
         reply = response.text.strip()
+        return {"reply": reply}
+        
         if not reply:
             reply = "Hmm, let me think about that. Can you ask in a different way?"
             
