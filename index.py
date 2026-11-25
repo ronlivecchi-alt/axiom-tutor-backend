@@ -43,13 +43,13 @@ else:
 gemini_key: str = os.environ.get("GEMINI_API_KEY", "")
 gemini_client = None
 # The new SDK doesn't need the "models/" prefix
-GEMINI_MODEL = "gemini-3.8-flash" 
+gemini_client = "gemini-3.8-flash" 
 
 if gemini_key:
     try:
         # The new SDK uses genai.Client() instead of genai.configure()
         gemini_client = genai.Client(api_key=gemini_key)
-        print(f"Gemini client initialized successfully (model: {GEMINI_MODEL})")
+        print(f"Gemini client initialized successfully (model: {gemini_client})")
     except Exception as e:
         print(f"Gemini init error: {e}")
 else:
@@ -75,7 +75,7 @@ def health_check():
         "status": "ok",
         "service": "Axiom AI Tutor API",
         "supabase_ready": supabase is not None,
-        "gemini_ready": gemini_model is not None,
+        "gemini_ready": gemini_client is not None,
     }
 
 # Fallback rule-based evaluation (used if Gemini fails)
@@ -88,7 +88,7 @@ def fallback_evaluate(user_answer: str, correct_answer: str):
 
 # Gemini-powered evaluation
 def evaluate_with_gemini(user_answer: str, problem_text: str, correct_answer: str):
-    if gemini_model is None:
+    if gemini_client is None:
         return None
 
     prompt = f"""You are a Socratic math tutor for IB MYP 1 students (age 11-12).
@@ -118,7 +118,7 @@ Rules:
 
     try:
         response = gemini_client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=gemini_client,
             contents=prompt
         )
         text = response.text.strip()
@@ -237,7 +237,7 @@ async def chat_with_tutor(message: dict):
     if not user_message:
         return {"reply": "Ask me anything about the problem we're working on!"}
 
-    if gemini_model is None:
+    if gemini_client is None:
         return {"reply": "I'm having trouble thinking right now. Try again in a moment!"}
 
     system_prompt = """You are Axiom, a Socratic math tutor for IB MYP 1 students (age 11-12).
@@ -259,7 +259,7 @@ You are a coach, not an answer key. Brevity is essential."""
 
     try:
         response = gemini_client.models.generate_content(
-            model=GEMINI_MODEL,
+            model=gemini_client,
             contents=prompt
         )
         reply = response.text.strip()
@@ -320,7 +320,7 @@ class GenerateRequest(BaseModel):
 
 @app.post("/api/generate-problem")
 async def generate_problem(req: GenerateRequest):
-    if not supabase or gemini_model is None:
+    if not supabase or gemini_client is None:
         return {"error": "Services not ready"}
 
     try:
@@ -379,7 +379,7 @@ The JSON must have exactly these keys:
 }}
 """
         # 4. Call Gemini
-        ai_response = gemini_model.generate_content(prompt)
+        ai_response = gemini_client.generate_content(prompt)
         text = ai_response.text.strip()
 
         # 5. Robustly strip markdown blocks if Gemini ignores instructions
@@ -552,7 +552,7 @@ class StudyToolsRequest(BaseModel):
 
 @app.post("/api/study-tools")
 async def generate_study_tools(req: StudyToolsRequest):
-    if not supabase or gemini_model is None:
+    if not supabase or gemini_client is None:
         return {"error": "Services not ready"}
 
     try:
@@ -590,7 +590,7 @@ Generate a JSON response with EXACTLY this structure (do not use markdown blocks
 }}
 Generate between 3 and 5 flashcards, and 3 to 5 bullet points for the graphic organizer.
 """
-        ai_response = gemini_model.generate_content(prompt)
+        ai_response = gemini_client.generate_content(prompt)
         text = ai_response.text.strip()
         
         if "```json" in text:
