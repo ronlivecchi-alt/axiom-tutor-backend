@@ -377,7 +377,7 @@ The JSON must have exactly these keys:
   "correct_answer": "The final exact correct answer.",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."],
   "criteria": "You MUST output exactly one of these strings: 'Criterion A', 'Criterion B', 'Criterion C', or 'Criterion D'. Do not output anything else in this field.",
-   "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // If Criterion B, you MUST populate this array with the student questions. Do NOT put the questions in the description.
+  "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // If Criterion B, you MUST populate this array with the student questions. Do NOT put the questions in the description.
 }}
 """
         # 4. Call Gemini
