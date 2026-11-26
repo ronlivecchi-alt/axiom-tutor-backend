@@ -646,21 +646,25 @@ async def generate_test(req: TestRequest):
         return []
     try:
         all_problems = []
+        seen_equations = set() # <--- This prevents duplicates
+        
         for topic in req.topics:
-            # Fetch problems for each selected topic
             clean_topic = topic.strip() if topic else ""
             response = supabase.table("problems").select("*").eq("topic", clean_topic).execute()
             if response.data:
-                all_problems.extend(response.data)
+                for prob in response.data:
+                    eq = prob.get("equation", "")
+                    # Only add if we haven't seen this exact equation yet
+                    if eq not in seen_equations:
+                        all_problems.append(prob)
+                        seen_equations.add(eq)
         
-        # If there aren't enough problems, just return all of them shuffled
         import random
         random.shuffle(all_problems)
-        
-        return all_problems[:10] # Return a maximum of 10 questions
+        return all_problems[:10] # Return up to 10 unique questions
     except Exception as e:
         print(f"Error generating test: {e}")
-        return []
+        return [] 
         
 @app.get("/api/students")
 async def get_all_students():
