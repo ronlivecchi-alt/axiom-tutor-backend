@@ -376,7 +376,7 @@ The JSON must have exactly these keys:
   "description": "A short 1-sentence instruction for the student.",
   "correct_answer": "The final exact correct answer.",
   "worked_example": ["Step 1: ...", "Step 2: ...", "Answer: ..."],
-  "criteria": "Which MYP Criterion(s) this problem assesses",
+    "criteria": "You MUST output exactly one of these strings: 'Criterion A', 'Criterion B', 'Criterion C', or 'Criterion D'. Do not output anything else in this field.",
    "parts": ["Part a: ...", "Part b: ...", "Part c: ..."] // If Criterion B, you MUST populate this array with the student questions. Do NOT put the questions in the description.
 }}
 """
@@ -496,6 +496,7 @@ class SaveProblemRequest(BaseModel):
     description: str
     correct_answer: str
     worked_example: list
+    parts: list = []
     criteria: str = "Criterion A"   
 
 @app.post("/api/save-problem")
@@ -512,6 +513,7 @@ async def save_problem(req: SaveProblemRequest):
             "correct_answer": req.correct_answer,
             "worked_example": req.worked_example,
             "criteria": req.criteria
+            "parts": req.parts
         }).execute()
         
         return {"message": "Problem saved successfully!"}
