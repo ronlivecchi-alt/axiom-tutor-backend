@@ -504,6 +504,7 @@ async def save_problem(req: SaveProblemRequest):
     if not supabase:
         return {"error": "Database not ready"}
     try:
+        # Make sure this exact line with the opening bracket { is there!
         supabase.table("problems").insert({
             "unit_name": req.unit_name,
             "topic": req.topic,
@@ -512,7 +513,7 @@ async def save_problem(req: SaveProblemRequest):
             "description": req.description,
             "correct_answer": req.correct_answer,
             "worked_example": req.worked_example,
-            "criteria": req.criteria
+            "criteria": req.criteria,
             "parts": req.parts
         }).execute()
         
@@ -520,7 +521,6 @@ async def save_problem(req: SaveProblemRequest):
     except Exception as e:
         print(f"Error saving problem: {e}")
         return {"error": str(e)}
-
 @app.get("/api/problems/{topic}")
 async def get_problems(topic: str):
     if not supabase:
