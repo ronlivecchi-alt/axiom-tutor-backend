@@ -496,8 +496,8 @@ class SaveProblemRequest(BaseModel):
     description: str
     correct_answer: str
     worked_example: list
-    parts: list = []
     criteria: str = "Criterion A"   
+    parts: list = []
 
 @app.post("/api/save-problem")
 async def save_problem(req: SaveProblemRequest):
