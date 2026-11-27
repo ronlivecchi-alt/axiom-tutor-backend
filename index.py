@@ -689,3 +689,14 @@ async def get_classes():
     except Exception as e:
         print(f"Error fetching classes: {e}")
         return []
+
+@app.get("/api/chat-logs/{student_id}")
+async def get_chat_logs(student_id: str):
+    if not supabase:
+        return []
+    try:
+        response = supabase.table("chat_logs").select("*").eq("student_id", student_id).order("created_at").execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error fetching chat logs: {e}")
+        return []
