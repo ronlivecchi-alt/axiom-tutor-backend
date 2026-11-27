@@ -234,6 +234,15 @@ async def chat_with_tutor(message: dict):
     problem_key = message.get("problem_key", "").strip()
     student_id = message.get("student_id", "").strip()
 
+    if supabase and student_id and user_message:
+        try:
+            supabase.table("chat_logs").insert({
+                "student_id": student_id,
+                "sender": "Student",
+                "message": user_message
+            }).execute()
+        except Exception as e:
+            print(f"Log error: {e}")
     if not user_message:
         return {"reply": "Ask me anything about the problem we're working on!"}
 
@@ -263,6 +272,16 @@ You are a coach, not an answer key. Brevity is essential."""
             contents=prompt
         )
         reply = response.text.strip()
+        if supabase and student_id and reply:
+            try:
+                supabase.table("chat_logs").insert({
+                    "student_id": student_id,
+                    "sender": "Axiom",
+                    "message": reply
+                }).execute()
+            except Exception as e:
+                print(f"Log error: {e}")
+
         return {"reply": reply}
         
         if not reply:
