@@ -269,7 +269,7 @@ You are a coach, not an answer key. Brevity is essential."""
     try:
         response = gemini_client.models.generate_content(
             model=GEMINI_MODEL,
-            contents=prompt
+            contents=full-prompt,
         )
         reply = response.text.strip()
         if supabase and student_id and reply:
