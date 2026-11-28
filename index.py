@@ -719,3 +719,30 @@ async def get_chat_logs(student_id: str):
     except Exception as e:
         print(f"Error fetching chat logs: {e}")
         return []
+
+@app.get("/api/reports/{student_id}")
+async def get_student_report(student_id: str):
+    if not supabase:
+        return {"error": "Database not connected"}
+    try:
+        # Fetch all submissions for this student
+        response = supabase.table("student_submissions").select("*").eq("student_id", student_id).execute()
+        submissions = response.data or []
+
+        total_attempts = len(submissions)
+        correct_count = sum(1 for s in submissions if s.get("is_correct"))
+        accuracy = round((correct_count / total_attempts) * 100) if total_attempts > 0 else 0
+
+        # Find the most common misconception tag
+        misconceptions = [s.get("misconception_tag") for s in submissions if s.get("misconception_tag")]
+        top_misconception = max(set(misconceptions), key=misconceptions.count) if misconceptions else "None"
+
+        return {
+            "total_attempts": total_attempts,
+            "correct_count": correct_count,
+            "accuracy": accuracy,
+            "top_misconception": top_misconception
+        }
+    except Exception as e:
+        print(f"Error generating report: {e}")
+        return {"error": str(e)}
